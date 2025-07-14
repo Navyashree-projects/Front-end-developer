@@ -1,0 +1,177 @@
+[12:17 am, 14/7/2025] Navya: body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+.calculator {
+    background-color: #333;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    width: 320px;
+}
+
+.calculator-display {
+    width: calc(100% - 20px);
+    background-color: #222;
+    color: #0f0; /* Green display for retro feel */
+    font-size: 2.5em;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+    text-align: right;
+    box-sizing: border-box;
+}
+
+.calculator-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.button {
+    background-color: #555;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 20px;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.button:hover {
+    background-color: #666;
+}
+
+.button.operator {
+    background-color: #f79234; /* Orange for operators */
+}
+
+.button.operator:hover {
+    background-color: #ff9d4a;
+}
+
+.button.equals {
+    background-color: #28a745; /* Green for equals */
+    grid-column: span 2; /* Make equals button span two columns */
+}
+
+.button.equals:hover {
+    background-color: #2fb94e;
+}
+
+.button.zero {
+    grid-column: span 2; /* Make zero button span two columns */
+}
+
+.button.decimal {
+    background-color: #555;
+}
+[12:17 am, 14/7/2025] Navya: const display = document.getElementById('display');
+const buttons = document.querySelectorAll('.button');
+
+let currentInput = '';
+let operator = null;
+let previousInput = '';
+let shouldResetDisplay = false;
+
+buttons.forEach(button => {
+    button.addEventListener('click', () => {
+        const buttonText = button.textContent;
+
+        if (button.classList.contains('number')) {
+            if (shouldResetDisplay) {
+                currentInput = buttonText;
+                shouldResetDisplay = false;
+            } else {
+                currentInput += buttonText;
+            }
+            display.value = currentInput;
+        } else if (button.classList.contains('operator')) {
+            const operatorType = button.dataset.operator;
+
+            if (operatorType === 'clear') {
+                currentInput = '';
+                operator = null;
+                previousInput = '';
+                display.value = '';
+                shouldResetDisplay = false;
+            } else if (operatorType === 'backspace') {
+                currentInput = currentInput.slice(0, -1);
+                display.value = currentInput;
+            } else if (operatorType === 'percentage') {
+                if (currentInput !== '') {
+                    currentInput = (parseFloat(currentInput) / 100).toString();
+                    display.value = currentInput;
+                }
+            } else if (operatorType === 'equals') {
+                if (operator && previousInput !== '' && currentInput !== '') {
+                    currentInput = calculate(previousInput, currentInput, operator);
+                    display.value = currentInput;
+                    previousInput = '';
+                    operator = null;
+                    shouldResetDisplay = true;
+                }
+            } else { // Handle +, -, *, / operators
+                if (currentInput === '' && previousInput === '') return; // No input to operate on
+
+                if (previousInput === '') {
+                    previousInput = currentInput;
+                    operator = operatorType;
+                    currentInput = '';
+                    shouldResetDisplay = true; // Prepare for next number input
+                } else if (currentInput !== '') {
+                    previousInput = calculate(previousInput, currentInput, operator);
+                    operator = operatorType;
+                    display.value = previousInput;
+                    currentInput = '';
+                    shouldResetDisplay = true;
+                } else {
+                    operator = operatorType; // Just change the operator if no new number
+                }
+            }
+        } else if (button.classList.contains('decimal')) {
+            if (!currentInput.includes('.')) {
+                currentInput += '.';
+                display.value = currentInput;
+            }
+        }
+    });
+});
+
+function calculate(num1, num2, op) {
+    let result;
+    const n1 = parseFloat(num1);
+    const n2 = parseFloat(num2);
+
+    if (isNaN(n1) || isNaN(n2)) return ''; // Handle cases where numbers might be invalid
+
+    switch (op) {
+        case 'add':
+            result = n1 + n2;
+            break;
+        case 'subtract':
+            result = n1 - n2;
+            break;
+        case 'multiply':
+            result = n1 * n2;
+            break;
+        case 'divide':
+            if (n2 === 0) {
+                alert("Cannot divide by zero!");
+                return '';
+            }
+            result = n1 / n2;
+            break;
+        default:
+            return '';
+    }
+    return result.toString();
+}
